@@ -23,7 +23,7 @@ module.exports = async (client, slackUserID, slackWorkspaceID, selectedDay) => {
     });
 
     if (queryAllSlots.length === 0) {  // init slots
-      for (let i = 1; i <= 1; i++) {
+      for (let i = 1; i <= 15; i++) {
         let slot;
         slot = await Slot.build({ slotNumber: i, type: 'AM' });
         await slot.save();
