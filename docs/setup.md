@@ -1,4 +1,4 @@
-# Setup Tasks App
+# Setup Parking App
 
 ## Installing
 
@@ -15,13 +15,13 @@ Before you can run the app, you'll need to store some environment variables.
 1. Copy `.env.sample` to `.env`
 2. Open your apps configuration page from [this list](https://api.slack.com/apps), click *OAuth & Permissions* in the left hand menu, then copy the *Bot User OAuth Token* into your `.env` file under `SLACK_BOT_TOKEN`
 3. Click *Basic Information* from the left hand menu and follow the steps in the *App-Level Tokens* section to create an app-level token with the `connections:write` scope. Copy that token into your `.env` as `SLACK_APP_TOKEN`.
-4. For the `DB_URI` value, you should enter the URI of the database system you plan to store tasks in. In the `.env.sample` file, we assume you're using [SQLite](https://www.sqlite.org/index.html), but you can use any system supported by [Sequelize](https://sequelize.org/)
+4. For the `DB_URI` value, you should enter the URI of the database system you plan to store reservations in. In the `.env.sample` file, we assume you're using [SQLite](https://www.sqlite.org/index.html), but you can use any system supported by [Sequelize](https://sequelize.org/)
 
 **Install dependencies**
 
 `npm install`
 
-*NOTE*: By default, Tasks App installs `sqlite3`, but as mentioned above, you can use any system supported by [Sequelize](https://sequelize.org/), just `npm install` the relevant package, e.g. `npm install mysql2`
+*NOTE*: By default, Parking App installs `sqlite3`, but as mentioned above, you can use any system supported by [Sequelize](https://sequelize.org/), just `npm install` the relevant package, e.g. `npm install mysql2`
 
 **Run database migrations**
 `npx sequelize-cli db:migrate`
