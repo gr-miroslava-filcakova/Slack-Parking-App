@@ -26,7 +26,7 @@ const buildModels = () => {
 	const modelsFiles = filter(modelsEntities, (modelsEntity) => modelsEntity.isFile())
 
 	// check if every model is imported (-2 because index.ts and init.ts can not be counted)
-	if (Object.keys(models).length !== modelsFiles.length - 2) {
+	if (Object.keys(models).length !== modelsFiles.length - 1) {
 		throw new Error('You probably forgot import database model!')
 	}
 
