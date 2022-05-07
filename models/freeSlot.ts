@@ -1,24 +1,28 @@
 import { Model, Sequelize, DataTypes } from 'sequelize'
 // eslint-disable-next-line import/no-cycle
 import { ModelsType } from './index'
+// eslint-disable-next-line import/no-cycle
 import { User } from './user'
+// eslint-disable-next-line import/no-cycle
+import { Slot } from './slot'
 
-export class Reservation extends Model {
+export class FreeSlot extends Model {
 	id: number
 	date: Date
 	// FK
-	UserId: string
-	SlotId: number
+	userID: string
+	slotID: number
 	user: User
+	slot: Slot
 
 	static associate(models: ModelsType) {
-		Reservation.belongsTo(models.Slot)
-		Reservation.belongsTo(models.User)
+		FreeSlot.belongsTo(models.Slot, { foreignKey: 'slotID' })
+		FreeSlot.belongsTo(models.User, { foreignKey: 'userID' })
 	}
 }
 
 export default (sequelize: Sequelize) => {
-	Reservation.init(
+	FreeSlot.init(
 		{
 			// Model attributes are defined here
 			date: {
@@ -28,8 +32,8 @@ export default (sequelize: Sequelize) => {
 		},
 		{
 			sequelize,
-			modelName: 'Reservation'
+			modelName: 'freeSlot'
 		}
 	)
-	return Reservation
+	return FreeSlot
 }

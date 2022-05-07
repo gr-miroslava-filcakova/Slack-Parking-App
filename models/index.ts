@@ -1,19 +1,25 @@
 import fs from 'fs'
+
 import { Sequelize } from 'sequelize'
 import { filter, forEach } from 'lodash'
 
-import defineReservation from './reservation'
+// eslint-disable-next-line import/no-cycle
+import defineFreeSlot from './freeSlot'
+// eslint-disable-next-line import/no-cycle
 import defineSlot from './slot'
+// eslint-disable-next-line import/no-cycle
 import defineUser from './user'
 
-const sequelize = new Sequelize(process.env.DB_URI)
+const sequelize = new Sequelize(process.env.DB_URI, {
+	logging: false
+})
 sequelize
 	.authenticate()
 	.then(() => console.log(`Database connection has been established successfully`))
 	.catch((err) => console.log(`Unable to connect to the database: ${err}`))
 
 const modelsBuilder = (instance: Sequelize) => ({
-	Reservation: defineReservation(instance),
+	FreeSlot: defineFreeSlot(instance),
 	Slot: defineSlot(instance),
 	User: defineUser(instance)
 })

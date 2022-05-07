@@ -9,7 +9,8 @@ export class User extends Model {
 	slackUsername: string
 
 	static associate(models: ModelsType) {
-		User.hasMany(models.Reservation, { foreignKey: 'UserId' })
+		User.hasOne(models.Slot, { foreignKey: 'userID' })
+		User.hasMany(models.FreeSlot, { foreignKey: 'userID' })
 	}
 }
 
@@ -35,7 +36,7 @@ export default (sequelize: Sequelize) => {
 		},
 		{
 			sequelize,
-			modelName: 'User'
+			modelName: 'users'
 		}
 	)
 	return User

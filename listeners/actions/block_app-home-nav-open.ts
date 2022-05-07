@@ -59,3 +59,13 @@ export const appHomeFifthCallback = async ({ body, ack, client }: any) => {
 		console.error(error)
 	}
 }
+
+export const appHomeMyFreeslotsCallback = async ({ body, ack, client }: any) => {
+	try {
+		await ack()
+		await reloadAppHome(client, body.user.id, body.team.id, -1)
+	} catch (error) {
+		// eslint-disable-next-line no-console
+		console.error(error)
+	}
+}

@@ -1,8 +1,8 @@
 import { HomeTab, Header, Divider, Section, Actions, Elements } from 'slack-block-builder'
 import pluralize from 'pluralize'
-import { Slot } from '../../models/slot'
+import { FreeSlot } from '../../models/freeSlot'
 
-export default (freeSlots: Slot[], reservedSlots: Slot[], selectedDate: any, reservedSlotsByUser: Slot[]) => {
+export default (freeSlots: FreeSlot[], reservedSlots: FreeSlot[], selectedDate: any, freeSlotsByUserRaw: any, slackUserID: any) => {
 	const todayDay = new Date()
 	const second = new Date()
 	second.setDate(todayDay.getDate() + 1)
@@ -43,20 +43,21 @@ export default (freeSlots: Slot[], reservedSlots: Slot[], selectedDate: any, res
 			Elements.Button({ text: getPrettyDate(fifth) })
 				.value('app-home-nav-fifth-day')
 				.actionId('app-home-nav-fifth-day')
-				.primary(primaryFlag === 4)
+				.primary(primaryFlag === 4),
+			Elements.Button({ text: 'My parking place :parking:' }).value('app-home-nav-manage').actionId('app-home-nav-manage').danger(true)
 		)
 	)
 
-	const freeSlotsList = freeSlots.map((slot) => {
-		const dayPart = slot.type === 'AM' ? '06:00 - 12:00' : '12:00 - 18:00'
-		const plainText = `:green_slot: *Slot ${slot.slotNumber} | ${slot.type} | ${dayPart}* \n _This slot is free._`
+	const freeSlotsList = freeSlots.map((item: FreeSlot) => {
+		const freeSlot = item.slot
+		const plainText = `:parking-avaliable: *Parking place ${freeSlot.slotNumber}* is free \n _Owner: ${freeSlot.user.slackUsername}_`
 
-		if (reservedSlotsByUser.length === 0 || reservedSlotsByUser[0].slotNumber === slot.slotNumber) {
+		if (freeSlot.userID !== slackUserID) {
 			return Section({
 				text: plainText
 			}).accessory(
-				Elements.Button({ text: `Reserve ${slot.slotNumber} | ${slot.type}` })
-					.value(`open-slot-${slot.id}-${selectedDate}`)
+				Elements.Button({ text: `Reserve parking place ${freeSlot.slotNumber}` })
+					.value(`open-slot-${item.id}-${selectedDate}`)
 					.actionId('reserve-slot')
 			)
 		}
@@ -66,15 +67,14 @@ export default (freeSlots: Slot[], reservedSlots: Slot[], selectedDate: any, res
 		})
 	})
 
-	const reservedSlotsList = reservedSlots.map((slot) => {
-		const dayPart = slot.type === 'AM' ? '06:00 - 12:00' : '12:00 - 18:00'
-		const slotIdsOfUserReservations = reservedSlotsByUser.map((item) => item.id)
-		const plainText = `:red_slot: *Slot ${slot.slotNumber} | ${slot.type} | ${dayPart}* \n _${slot.reservations[0].user.slackUsername}_`
+	const reservedSlotsList = reservedSlots.map((freeSlot: FreeSlot) => {
+		const { slot } = freeSlot
+		const plainText = `:parking-occupied: *Parking place ${slot.slotNumber} | reserved by ${freeSlot.user.slackUsername} * \n _ Owner: ${slot.user.slackUsername}_`
 
-		if (slotIdsOfUserReservations.includes(slot.id)) {
+		if (slackUserID === freeSlot.userID) {
 			return Section({
 				text: plainText
-			}).accessory(Elements.Button({ text: 'Cancel' }).value(`${slot.reservations[0].id}-${selectedDate}`).actionId('free-slot').danger(true))
+			}).accessory(Elements.Button({ text: 'Cancel' }).value(`${freeSlot.id}-${selectedDate}`).actionId('free-slot').danger(true))
 		}
 
 		return Section({
@@ -82,11 +82,35 @@ export default (freeSlots: Slot[], reservedSlots: Slot[], selectedDate: any, res
 		})
 	})
 
+	function getOnlyDate(pDate: any) {
+		return `${pDate.getFullYear()}/${pDate.getMonth() + 1}/${pDate.getDate()}`
+	}
+	const freeslotsByUser = freeSlotsByUserRaw.map((item: FreeSlot) => {
+		const freeSlot = item.slot
+		const plainText = `:parking-avaliable: Parking place ${freeSlot.slotNumber} | Is free on ${getPrettyDate(item.date)} \n _ Owner: ${
+			freeSlot.user.slackUsername
+		}_`
+
+		return Section({
+			text: plainText
+		}).accessory(
+			Elements.Button({ text: 'Cancel' })
+				.value(`${item.id}-${getOnlyDate(item.date)}`)
+				.actionId('cancel-my-freeslot')
+				.danger(true)
+		)
+	})
+
+	if (selectedDate === -1) {
+		homeTab.blocks(Header({ text: `Your parking place availability` }), freeslotsByUser)
+		return homeTab.buildToJSON()
+	}
+
 	if (freeSlots.length === 0) {
 		homeTab.blocks(
-			Header({ text: 'No free slots' }),
+			Header({ text: 'No free parking places' }),
 			Divider(),
-			Section({ text: ':(' }),
+			Section({ text: ':mano_cop:' }),
 			Divider(),
 			Header({ text: `We have ${reservedSlots.length} ${pluralize('reservation', reservedSlots.length)}` }),
 			reservedSlotsList
@@ -95,7 +119,7 @@ export default (freeSlots: Slot[], reservedSlots: Slot[], selectedDate: any, res
 	}
 
 	homeTab.blocks(
-		Header({ text: `You have ${freeSlots.length} parking ${pluralize('option', freeSlots.length)}` }),
+		Header({ text: `We have ${freeSlots.length} free parking ${pluralize('place', freeSlots.length)}` }),
 		Divider(),
 		freeSlotsList,
 		Divider(),

@@ -1,8 +1,6 @@
 import { App, LogLevel } from '@slack/bolt'
-import { Sequelize } from 'sequelize'
+import sequelize from './models'
 import registerListeners from './listeners'
-
-const sequelize = new Sequelize(process.env.DB_URI)
 
 let logLevel
 switch (process.env.LOG_LEVEL) {
@@ -32,8 +30,7 @@ const app = new App({
 registerListeners(app)
 ;(async () => {
 	try {
-		await sequelize.authenticate()
-		await sequelize.sync({ force: true })
+		await sequelize.sync()
 		// eslint-disable-next-line no-console
 		console.log('All models were synchronized successfully.')
 		// eslint-disable-next-line no-console

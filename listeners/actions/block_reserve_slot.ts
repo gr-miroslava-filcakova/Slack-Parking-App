@@ -1,14 +1,15 @@
+import { Op } from 'sequelize'
 import { models } from '../../models'
 import reloadAppHome from '../../utilities/reload-app-home'
 import slotReserved from '../../user-interface/modals/slot-reserved'
 import slotError from '../../user-interface/modals/slot-error'
 
-const { User, Reservation } = models
+const { User, FreeSlot } = models
 
 export default async ({ ack, action, client, body }: any) => {
 	await ack()
 
-	const slotToUpdate = action.value.split('-')[2]
+	const freeSlotId = action.value.split('-')[2]
 	let day = action.value.split('-')[3]
 	day = Number(day)
 
@@ -19,51 +20,67 @@ export default async ({ ack, action, client, body }: any) => {
 
 	const dateString = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
 
-	const queryUser = await User.findOne({
-		where: {
-			id: body.user.id
-		}
-	})
+	try {
+		const queryUser = await User.findOne({
+			where: {
+				id: body.user.id
+			}
+		})
 
-	let userId
-	if (!queryUser) {
-		const user = User.build({ id: body.user.id, slackWorkspaceID: body.team.id, slackUsername: body.user.username })
-		await user.save()
-		userId = user.id
-	} else {
-		userId = queryUser.id
-	}
-
-	const pDate = new Date(dateString)
-	pDate.setHours(pDate.getHours() + 4)
-
-	const existReservation = await Reservation.findAll({
-		where: {
-			SlotId: slotToUpdate,
-			date: pDate
-		}
-	})
-
-	if (existReservation.length === 0) {
-		const reservation = await Reservation.build({ date: pDate, UserId: userId, SlotId: slotToUpdate })
-		await reservation.save()
-
-		try {
-			await ack()
-			await client.views.open({
-				trigger_id: body.trigger_id,
-				view: slotReserved()
+		let userID
+		if (!queryUser) {
+			const user = User.build({
+				id: body.user.id,
+				slackWorkspaceID: body.team.id,
+				slackUsername: body.user.username
 			})
-		} catch (error) {
-			// eslint-disable-next-line no-console
-			console.error(error)
+			await user.save()
+			userID = user.id
+		} else {
+			userID = queryUser.id
 		}
-	} else {
+
+		const existReservation = await FreeSlot.findAll({
+			where: {
+				[Op.and]: [{ id: freeSlotId }, { userID: { [Op.is]: null } }]
+			}
+		})
+
+		const pDate = new Date(dateString)
+		pDate.setHours(pDate.getHours() + 3) // TODO na oracle len +1
+
+		const usersReservations = await FreeSlot.findAll({
+			where: {
+				[Op.and]: [{ date: pDate }, { userID }]
+			}
+		})
+
+		if (usersReservations.length > 0) {
+			throw new Error('Slot reservation failed! You already have reservations on this day.')
+		}
+
+		if (existReservation.length === 1) {
+			await FreeSlot.update({ userID }, { where: { id: freeSlotId } })
+
+			try {
+				await ack()
+				await client.views.open({
+					trigger_id: body.trigger_id,
+					view: slotReserved()
+				})
+			} catch (error) {
+				// eslint-disable-next-line no-console
+				console.error(error)
+			}
+		} else {
+			throw new Error('Slot reservation failed! Please choose another slot.')
+		}
+	} catch (err) {
 		try {
 			await ack()
 			await client.views.open({
 				trigger_id: body.trigger_id,
-				view: slotError()
+				view: slotError(err.message)
 			})
 		} catch (error) {
 			// eslint-disable-next-line no-console
