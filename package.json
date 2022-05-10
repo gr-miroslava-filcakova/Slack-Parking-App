@@ -6,8 +6,9 @@
   "scripts": {
     "test": "jest --no-cache",
     "lint": "eslint . --ext .js --fix",
-    "build": "npx sequelize-cli db:migrate",
-    "start": "cross-env TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true node -r dotenv/config -r ts-node/register app.ts"
+	"build": "rimraf ./dist && tsc --project tsconfig.json",
+    "start": "cross-env TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true node -r dotenv/config -r ts-node/register app.ts",
+	"seed:dev": "DB_URI=postgres://postgres:Tejkosmejko@localhost:5432/parking_test npm run build && \"./node_modules/.bin/sequelize\" db:seed:all --seeders-path \"./dist/seeders/\""
   },
   "jest": {
     "collectCoverage": true
